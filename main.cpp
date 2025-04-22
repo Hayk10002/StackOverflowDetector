@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 
 volatile int stack_size = 0;
 
