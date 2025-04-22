@@ -1,11 +1,5 @@
 #include <iostream>
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <signal.h>
-#include <unistd.h>
-#endif
+#include <cstdlib>
 
 volatile int stack_size = 0;
 
@@ -19,35 +13,38 @@ void cause_stack_overflow() {
 
 
 #if defined(_WIN32) && defined(_MSC_VER)
-void stack_overflow_handler() {
-    __try {
-        cause_stack_overflow();  // This will cause a stack overflow
+    #include <windows.h>
+    // MSVC — use SEH
+
+    int main() {
+        char stack_fence[4*1024];
+        (void)stack_fence;
+
+        __try {
+            cause_stack_overflow();
+        } __except(EXCEPTION_EXECUTE_HANDLER) {
+            std::cout << "Caught structured exception (stack overflow)\n";
+            std::cout << "Stack size estimated: " << stack_size / 1024 << "KB\n";
+            return 0;
+        }
     }
-    __except (EXCEPTION_STACK_OVERFLOW) {
-        std::cerr << "Stack overflow detected!" << std::endl;
+        
+#else
+    // Linux / macOS — GCC or Clang and MinGW (GCC on Windows) — use signal
+    #include <csignal>
+    #include <unistd.h>
+
+    void handler(int signum) {
+        std::cout << "Caught signal " << signum << ": Stack overflow detected!\n";
+        std::cout << "Stack size estimated: " << stack_size / 1024 << "KB\n";
+        _exit(0);
     }
-}
-#else
-void signal_handler(int sig) {
-    void *array[10];
-    size_t size;
-    std::cerr << "Stack overflow detected!" << std::endl;
 
-    exit(1); // Exit after handling the stack overflow
-}
+    int main() {
+        char stack_fence[4*1024];
+        (void)stack_fence;
+
+        signal(SIGSEGV, handler);
+        cause_stack_overflow();
+    }
 #endif
-
-int main() {
-#ifdef _WIN32
-    stack_overflow_handler();
-#else
-    struct sigaction sa;
-    sa.sa_handler = signal_handler;
-    sa.sa_flags = SA_SIGINFO;
-    sigaction(SIGSEGV, &sa, NULL);  // Register signal handler
-
-    cause_stack_overflow();  // This will cause a stack overflow
-#endif
-
-    return 0;
-}
