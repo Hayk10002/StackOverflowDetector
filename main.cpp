@@ -5,7 +5,6 @@
 #else
 #include <signal.h>
 #include <unistd.h>
-#include <execinfo.h>
 #endif
 
 volatile int stack_size = 0;
@@ -34,10 +33,6 @@ void signal_handler(int sig) {
     size_t size;
     std::cerr << "Stack overflow detected!" << std::endl;
 
-    // Print stack trace
-    size = backtrace(array, 10);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-
     exit(1); // Exit after handling the stack overflow
 }
 #endif
@@ -51,7 +46,7 @@ int main() {
     sa.sa_flags = SA_SIGINFO;
     sigaction(SIGSEGV, &sa, NULL);  // Register signal handler
 
-    cause_stack_overflow(0);  // This will cause a stack overflow
+    cause_stack_overflow();  // This will cause a stack overflow
 #endif
 
     return 0;
