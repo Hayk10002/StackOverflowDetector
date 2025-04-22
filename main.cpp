@@ -35,7 +35,7 @@ void cause_stack_overflow() {
     #include <cstring>
     #include <unistd.h>
 
-    void handler(int signum) {
+    void handler(int signum, siginfo_t *info, void *context) {
         std::cout << "Caught signal " << signum << ": Stack overflow detected!\n";
         std::cout << "Stack size estimated: " << stack_size / 1024 << "KB\n";
         _exit(0);
