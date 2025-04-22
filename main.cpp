@@ -33,6 +33,8 @@ void cause_stack_overflow() {
     // Linux / macOS — GCC or Clang and MinGW (GCC on Windows) — use signal
     #include <csignal>
     #include <unistd.h>
+    #include <execinfo.h>
+    #include <cstdlib>
 
     void handler(int signum) {
         std::cout << "Caught signal " << signum << ": Stack overflow detected!\n";
@@ -44,7 +46,11 @@ void cause_stack_overflow() {
         char stack_fence[4*1024];
         (void)stack_fence;
 
-        signal(SIGSEGV, handler);
+        struct sigaction sa;
+        sa.sa_handler = handler;
+        sa.sa_flags = SA_SIGINFO; 
+        sigaction(SIGSEGV, &sa, NULL);
+
         cause_stack_overflow();
     }
 #endif
