@@ -5,7 +5,7 @@ volatile int stack_size = 0;
 void cause_stack_overflow() {
     volatile char buffer[4*1024];
     stack_size += 4*1024;
-    buffer[0] = stack_size / 4*1024; 
+    memset((void*)buffer, stack_size / 4*1024, 4*1024); 
     cause_stack_overflow();
     buffer[4*1024 - 1] = stack_size / 4*1024; 
 }
