@@ -16,15 +16,13 @@ void cause_stack_overflow() {
     // MSVC — use SEH
 
     int main() {
-        char stack_fence[4*1024];
-        (void)stack_fence;
 
         __try {
             cause_stack_overflow();
         } __except(EXCEPTION_EXECUTE_HANDLER) {
             std::cout << "Caught structured exception (stack overflow)\n";
             std::cout << "Stack size estimated: " << stack_size / 1024 << "KB\n";
-            return 0;
+            return 1;
         }
     }
         
@@ -38,7 +36,7 @@ void cause_stack_overflow() {
     void handler(int signum, siginfo_t *info, void *context) {
         std::cout << "Caught signal " << signum << ": Stack overflow detected!\n";
         std::cout << "Stack size estimated: " << stack_size / 1024 << "KB\n";
-        _exit(0);
+        _exit(1);
     }
 
     int main() {
